@@ -493,10 +493,6 @@ body {
     gap: 14px;
   }
 
-  .player-card {
-    padding: 16px;
-  }
-
   .player-header {
     padding: 12px;
   }
@@ -585,3 +581,4 @@ body {
   color: #9ca3af;
   font-weight: 400;
 }
+
