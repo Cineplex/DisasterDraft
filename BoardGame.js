@@ -346,7 +346,7 @@ function createPlayerCard(playerId) {
           </div>
         </div>
       </div>
-      <button class="calculate-btn" onclick="calculateAssets(${playerId})">คำนวณมูลค่าสินทรัพย์</button>
+      <button class="calculate-btn" onclick="calculateAssets(${playerId})" style="display: none;">คำนวณมูลค่าสินทรัพย์</button>
       <div class="result" id="assets-result-${playerId}">รอการคำนวณ</div>
     </div>
     
@@ -414,7 +414,7 @@ function createPlayerCard(playerId) {
           </div>
         </div>
       </div>
-      <button class="calculate-btn" onclick="calculateRisk(${playerId})">คำนวณความเสี่ยง</button>
+      <button class="calculate-btn" onclick="calculateRisk(${playerId})" style="display: none;">คำนวณความเสี่ยง</button>
       <div class="result" id="risk-result-${playerId}">รอการคำนวณ</div>
     </div>
   `;
@@ -429,6 +429,9 @@ function addPlayer() {
   container.appendChild(card);
   applyResponsiveFormulaTexts();
   updateRemoveButtons();
+  // Auto-calculate initial values
+  calculateAssets(playerCount);
+  calculateRisk(playerCount);
 }
 
 function confirmRemovePlayer(playerId) {
@@ -924,6 +927,7 @@ function incrementValue(inputId) {
     let value = parseInt(display.textContent) || 0;
     value++;
     display.textContent = value;
+    autoCalculateForInput(inputId);
   }
 }
 
@@ -937,6 +941,25 @@ function decrementValue(inputId, min = 0) {
       value--;
     }
     display.textContent = value;
+    autoCalculateForInput(inputId);
+  }
+}
+
+function autoCalculateForInput(inputId) {
+  // Extract playerId from inputId (format: "people-1", "hazard-2", etc.)
+  const match = inputId.match(/-(\d+)$/);
+  if (!match) return;
+  
+  const playerId = parseInt(match[1]);
+  if (!playerId) return;
+  
+  // Check if this input is related to assets or risk
+  if (inputId.startsWith('people-') || inputId.startsWith('house-') || 
+      inputId.startsWith('condo-') || inputId.startsWith('coins-')) {
+    calculateAssets(playerId);
+  } else if (inputId.startsWith('hazard-') || inputId.startsWith('exposure-') || 
+             inputId.startsWith('vulnerability-') || inputId.startsWith('capacity-')) {
+    calculateRisk(playerId);
   }
 }
 
@@ -959,8 +982,10 @@ function calculateRisk(playerId) {
   const capacity = Math.max(1, parseInt(document.getElementById(`capacity-${playerId}`).textContent) || 1);
   
   const risk = (hazard * exposure * vulnerability) / capacity;
+  // ปัดทศนิยมขึ้นตามกฎกติกา
+  const riskRounded = risk.toFixed(2);
   
-  document.getElementById(`risk-result-${playerId}`).textContent = `ความเสี่ยง: ${risk.toFixed(2)}`;
+  document.getElementById(`risk-result-${playerId}`).textContent = `ความเสี่ยง: ${riskRounded}`;
 }
 
 function updateAllPlayerLabels() {
