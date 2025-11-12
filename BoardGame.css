@@ -38,18 +38,22 @@ body {
 }
 
 .info-icon-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1100;
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid white;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
   padding: 0;
-  margin-bottom: 10px;
+  box-shadow: 0 12px 20px rgba(0,0,0,0.25);
 }
 
 .info-icon-btn:hover {
@@ -61,6 +65,16 @@ body {
   width: 24px;
   height: 24px;
   fill: white;
+}
+
+.info-icon-btn--on-light {
+  background: rgba(17, 24, 39, 0.95);
+  border-color: rgba(17, 24, 39, 0.95);
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.5);
+}
+
+.info-icon-btn--on-light svg {
+  fill: #f9fafb;
 }
 
 .controls {
@@ -819,13 +833,15 @@ body {
 
 @media (max-width: 768px) {
   .info-icon-btn {
-    width: 36px;
-    height: 36px;
+    bottom: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
   }
 
   .info-icon-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 
   .info-popup-content {

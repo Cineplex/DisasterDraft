@@ -17,9 +17,19 @@ const defaultConfig = {
 };
 
 let playerCount = 0;
+const INFO_BUTTON_BRIGHTNESS_THRESHOLD = 190;
+let infoButtonContrastRafId = null;
+let infoButtonContrastObserver = null;
+const INFO_BUTTON_DISPLAY_KEY = '__infoButtonSavedDisplay';
+const formulaTexts = {
+  label: 'Risk ='
+};
+const FORMULA_MEDIA_QUERY = '(max-width: 768px)';
+let formulaMediaQuery = null;
+let formulaMediaQueryListenerAttached = false;
 
 function getPlayerName(playerId) {
-  const config = window.elementSdk?.config || defaultConfig;
+  const config = getActiveConfig();
   const playerKey = `player_${playerId}_name`;
   return config[playerKey] || defaultConfig[playerKey] || `ผู้เล่นคนที่ ${playerId}`;
 }
@@ -159,14 +169,105 @@ function toggleEditName(playerId) {
   input.select();
 }
 
+function getActiveConfig() {
+  return window.elementSdk?.config || defaultConfig;
+}
+
+function splitLabelParts(labelText) {
+  const fallback = (labelText || '').trim();
+  if (!fallback) {
+    return { primary: '', secondary: '', original: '' };
+  }
+  const match = fallback.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+  if (!match) {
+    return { primary: fallback, secondary: '', original: fallback };
+  }
+  const primary = (match[1] || '').trim();
+  const secondary = (match[2] || '').trim();
+  return {
+    primary: primary || fallback,
+    secondary,
+    original: fallback
+  };
+}
+
+function buildLabelForMode(parts, compactMode) {
+  if (compactMode) {
+    return parts.secondary || parts.primary || parts.original || '';
+  }
+  if (parts.secondary) {
+    return `${parts.primary} (${parts.secondary})`;
+  }
+  return parts.primary || parts.original || '';
+}
+
+function getResponsiveFormulaTexts() {
+  const config = getActiveConfig();
+  const compactMode = formulaMediaQuery ? formulaMediaQuery.matches
+    : (typeof window !== 'undefined' && window.matchMedia
+        ? (formulaMediaQuery = window.matchMedia(FORMULA_MEDIA_QUERY)).matches
+        : false);
+
+  const hazardParts = splitLabelParts(config.hazard_label);
+  const exposureParts = splitLabelParts(config.exposure_label);
+  const vulnerabilityParts = splitLabelParts(config.vulnerability_label);
+  const capacityParts = splitLabelParts(config.capacity_label);
+
+  const hazardText = buildLabelForMode(hazardParts, compactMode);
+  const exposureText = buildLabelForMode(exposureParts, compactMode);
+  const vulnerabilityText = buildLabelForMode(vulnerabilityParts, compactMode);
+  const capacityText = buildLabelForMode(capacityParts, compactMode);
+
+  return {
+    label: formulaTexts.label,
+    numerator: `${hazardText} × ${exposureText} × ${vulnerabilityText}`,
+    denominator: capacityText
+  };
+}
+
+function applyResponsiveFormulaTexts() {
+  const { label, numerator, denominator } = getResponsiveFormulaTexts();
+  const formulas = document.querySelectorAll('.formula');
+  formulas.forEach(formula => {
+    const labelEl = formula.querySelector('.formula-label');
+    const numeratorEl = formula.querySelector('.formula-numerator');
+    const denominatorEl = formula.querySelector('.formula-denominator');
+    if (labelEl) labelEl.textContent = label;
+    if (numeratorEl) numeratorEl.textContent = numerator;
+    if (denominatorEl) denominatorEl.textContent = denominator;
+  });
+}
+
+function initResponsiveFormula() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (window.matchMedia) {
+    if (!formulaMediaQuery) {
+      formulaMediaQuery = window.matchMedia(FORMULA_MEDIA_QUERY);
+    }
+    if (formulaMediaQuery && !formulaMediaQueryListenerAttached) {
+      const listener = () => applyResponsiveFormulaTexts();
+      if (typeof formulaMediaQuery.addEventListener === 'function') {
+        formulaMediaQuery.addEventListener('change', listener);
+      } else if (typeof formulaMediaQuery.addListener === 'function') {
+        formulaMediaQuery.addListener(listener);
+      }
+      formulaMediaQueryListenerAttached = true;
+    }
+  }
+  applyResponsiveFormulaTexts();
+}
+
 function createPlayerCard(playerId) {
   const card = document.createElement('div');
   card.className = 'player-card';
   card.id = `player-${playerId}`;
   
-  const config = window.elementSdk?.config || defaultConfig;
+  const config = getActiveConfig();
   const playerName = getPlayerName(playerId);
   const colorClass = `color-${((playerId - 1) % 5) + 1}`;
+  const responsiveFormula = getResponsiveFormulaTexts();
   
   // Always render remove button; visibility handled by updateRemoveButtons
   const removeButtonHtml = `
@@ -252,11 +353,11 @@ function createPlayerCard(playerId) {
     <div class="section">
       <h3>วิเคราะห์ความเสี่ยง</h3>
       <div class="formula">
-        <span class="formula-label">Risk =</span>
+         <span class="formula-label">${responsiveFormula.label}</span>
         <div class="formula-fraction">
-          <div class="formula-numerator">${config.hazard_label} × ${config.exposure_label} × ${config.vulnerability_label}</div>
+           <div class="formula-numerator">${responsiveFormula.numerator}</div>
           <div class="formula-divider"></div>
-          <div class="formula-denominator">${config.capacity_label}</div>
+           <div class="formula-denominator">${responsiveFormula.denominator}</div>
         </div>
       </div>
       <div class="input-group">
@@ -326,6 +427,7 @@ function addPlayer() {
   const container = document.getElementById('players-container');
   const card = createPlayerCard(playerCount);
   container.appendChild(card);
+  applyResponsiveFormulaTexts();
   updateRemoveButtons();
 }
 
@@ -413,6 +515,7 @@ function showInfoPopup() {
         <button class="info-option-btn" onclick="showRulesInfo()">กฎกติกาและวิธีการเล่น</button>
       </div>
   `;
+  hideInfoButton();
 }
 
 function closeInfoPopup() {
@@ -420,6 +523,7 @@ function closeInfoPopup() {
   if (popup) {
     popup.remove();
   }
+  showInfoButton();
 }
 
 function showBasicInfo() {
@@ -545,6 +649,8 @@ function showRulesInfo() {
   
   const contentDiv = popup.querySelector('.info-popup-content, .rules-popup-content');
   if (!contentDiv) return;
+
+  const responsiveFormula = getResponsiveFormulaTexts();
   
   contentDiv.className = 'rules-popup-content';
   contentDiv.innerHTML = `
@@ -576,11 +682,11 @@ function showRulesInfo() {
         <section class="rules-section">
           <h3>สูตรวิเคราะห์ความเสี่ยงจากภัยพิบัติ</h3>
           <div class="formula">
-            <span class="formula-label">Risk =</span>
+            <span class="formula-label">${responsiveFormula.label}</span>
             <div class="formula-fraction">
-              <div class="formula-numerator">ภัยอันตราย (Hazard) × ความล่อแหลม (Exposure) × ความเปราะบาง (Vulnerability)</div>
+              <div class="formula-numerator">${responsiveFormula.numerator}</div>
               <div class="formula-divider"></div>
-              <div class="formula-denominator">ความสามารถในการรับมือ (Capacity)</div>
+              <div class="formula-denominator">${responsiveFormula.denominator}</div>
             </div>
           </div>
         </section>
@@ -656,6 +762,7 @@ function showRulesInfo() {
         </section>
       </div>
   `;
+  applyResponsiveFormulaTexts();
 }
 
 function removePlayer(playerId) {
@@ -679,6 +786,136 @@ function updateRemoveButtons() {
       }
     }
   });
+}
+
+function parseColorToRgba(color) {
+  if (!color || typeof color !== 'string') {
+    return null;
+  }
+  if (color === 'transparent') {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
+  const rgbaMatch = color.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s\/]+([\d.]+))?\s*\)/i);
+  if (rgbaMatch) {
+    return {
+      r: parseFloat(rgbaMatch[1]),
+      g: parseFloat(rgbaMatch[2]),
+      b: parseFloat(rgbaMatch[3]),
+      a: rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1
+    };
+  }
+  return null;
+}
+
+function getBrightnessFromRgba(rgba) {
+  if (!rgba) {
+    return 0;
+  }
+  return (0.299 * rgba.r) + (0.587 * rgba.g) + (0.114 * rgba.b);
+}
+
+function resolveBackgroundRgba(element) {
+  let current = element;
+  while (current && current !== document.documentElement) {
+    const style = window.getComputedStyle(current);
+    const rgba = parseColorToRgba(style.backgroundColor);
+    if (rgba && rgba.a > 0.05) {
+      return rgba;
+    }
+    current = current.parentElement;
+  }
+  const bodyRgba = parseColorToRgba(window.getComputedStyle(document.body).backgroundColor);
+  if (bodyRgba && bodyRgba.a > 0.05) {
+    return bodyRgba;
+  }
+  return { r: 51, g: 65, b: 148, a: 1 };
+}
+
+function adjustInfoButtonContrast(btn) {
+  if (!btn) {
+    return;
+  }
+  const rect = btn.getBoundingClientRect();
+  if (!rect || rect.width === 0 || rect.height === 0) {
+    return;
+  }
+  const centerX = rect.left + (rect.width / 2);
+  const centerY = rect.top + (rect.height / 2);
+  const elementsAtPoint = document.elementsFromPoint(centerX, centerY) || [];
+  let backgroundElement = null;
+  for (const el of elementsAtPoint) {
+    if (el === btn || btn.contains(el)) {
+      continue;
+    }
+    backgroundElement = el;
+    break;
+  }
+  const backgroundRgba = resolveBackgroundRgba(backgroundElement);
+  const brightness = getBrightnessFromRgba(backgroundRgba);
+  if (brightness >= INFO_BUTTON_BRIGHTNESS_THRESHOLD) {
+    btn.classList.add('info-icon-btn--on-light');
+  } else {
+    btn.classList.remove('info-icon-btn--on-light');
+  }
+}
+
+function scheduleInfoButtonContrastUpdate(btn) {
+  if (infoButtonContrastRafId !== null) {
+    return;
+  }
+  infoButtonContrastRafId = window.requestAnimationFrame(() => {
+    infoButtonContrastRafId = null;
+    adjustInfoButtonContrast(btn);
+  });
+}
+
+function initInfoButtonContrastWatcher() {
+  if (window.__infoButtonContrastInit) {
+    return;
+  }
+  const btn = document.querySelector('.info-icon-btn');
+  if (!btn) {
+    if (!window.__infoButtonContrastDeferred) {
+      window.__infoButtonContrastDeferred = true;
+      window.addEventListener('DOMContentLoaded', () => {
+        window.__infoButtonContrastDeferred = false;
+        initInfoButtonContrastWatcher();
+      }, { once: true });
+    }
+    return;
+  }
+  window.__infoButtonContrastInit = true;
+  const scheduleUpdate = () => scheduleInfoButtonContrastUpdate(btn);
+  window.addEventListener('scroll', scheduleUpdate, { passive: true });
+  window.addEventListener('resize', scheduleUpdate);
+  infoButtonContrastObserver = new MutationObserver(scheduleUpdate);
+  infoButtonContrastObserver.observe(document.body, {
+    attributes: true,
+    childList: true,
+    subtree: true
+  });
+  scheduleUpdate();
+}
+
+function hideInfoButton() {
+  const btn = document.querySelector('.info-icon-btn');
+  if (!btn) {
+    return;
+  }
+  if (btn[INFO_BUTTON_DISPLAY_KEY] === undefined) {
+    btn[INFO_BUTTON_DISPLAY_KEY] = btn.style.display || '';
+  }
+  btn.style.display = 'none';
+}
+
+function showInfoButton() {
+  const btn = document.querySelector('.info-icon-btn');
+  if (!btn) {
+    return;
+  }
+  const savedDisplay = btn[INFO_BUTTON_DISPLAY_KEY];
+  btn.style.display = savedDisplay !== undefined ? savedDisplay : '';
+  scheduleInfoButtonContrastUpdate(btn);
 }
 
 function incrementValue(inputId) {
@@ -711,7 +948,7 @@ function calculateAssets(playerId) {
   
   const total = (people * 4) + (house * 1) + (condo * 2) + coins;
   
-  const config = window.elementSdk?.config || defaultConfig;
+  const config = getActiveConfig();
   document.getElementById(`assets-result-${playerId}`).textContent = `มูลค่ารวม: ${total} ${config.coin_label}`;
 }
 
@@ -727,7 +964,7 @@ function calculateRisk(playerId) {
 }
 
 function updateAllPlayerLabels() {
-  const config = window.elementSdk?.config || defaultConfig;
+  const config = getActiveConfig();
   
   document.getElementById('game-title').textContent = config.game_title || defaultConfig.game_title;
   
@@ -748,17 +985,8 @@ function updateAllPlayerLabels() {
     if (labels[5]) labels[5].textContent = config.exposure_label;
     if (labels[6]) labels[6].textContent = config.vulnerability_label;
     if (labels[7]) labels[7].textContent = config.capacity_label;
-    
-    const formula = card.querySelector('.formula');
-    if (formula) {
-      const formulaLabel = formula.querySelector('.formula-label');
-      const formulaNumerator = formula.querySelector('.formula-numerator');
-      const formulaDenominator = formula.querySelector('.formula-denominator');
-      if (formulaLabel) formulaLabel.textContent = 'Risk =';
-      if (formulaNumerator) formulaNumerator.textContent = `(${config.hazard_label} × ${config.exposure_label} × ${config.vulnerability_label})`;
-      if (formulaDenominator) formulaDenominator.textContent = config.capacity_label;
-    }
   });
+  applyResponsiveFormulaTexts();
 }
 
 async function onConfigChange(config) {
@@ -795,8 +1023,10 @@ if (window.elementSdk) {
 }
 
 // Initialize
+initResponsiveFormula();
 addPlayer();
 updateRemoveButtons();
+initInfoButtonContrastWatcher();
 
 // Cloudflare injected script kept as-is
 (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c53eb022244b94',t:'MTc2Mjc3NDUxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
