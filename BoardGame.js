@@ -10,10 +10,10 @@ const defaultConfig = {
   house_label: "บ้าน",
   condo_label: "คอนโด",
   coin_label: "เหรียญ",
-  hazard_label: "ภัยอันตราย (Hazard)",
+  hazard_label: "ภัยพิบัติ (Hazard)",
   exposure_label: "ความล่อแหลม (Exposure)",
   vulnerability_label: "ความเปราะบาง (Vulnerability)",
-  capacity_label: "ความสามารถ (Capacity)"
+  capacity_label: "ความสามารถในการรับมือ (Capacity)"
 };
 
 let playerCount = 0;
@@ -22,7 +22,7 @@ let infoButtonContrastRafId = null;
 let infoButtonContrastObserver = null;
 const INFO_BUTTON_DISPLAY_KEY = '__infoButtonSavedDisplay';
 const formulaTexts = {
-  label: 'Risk ='
+  label: 'ความเสี่ยง ='
 };
 const FORMULA_MEDIA_QUERY = '(max-width: 768px)';
 let formulaMediaQuery = null;
@@ -203,20 +203,17 @@ function buildLabelForMode(parts, compactMode) {
 
 function getResponsiveFormulaTexts() {
   const config = getActiveConfig();
-  const compactMode = formulaMediaQuery ? formulaMediaQuery.matches
-    : (typeof window !== 'undefined' && window.matchMedia
-        ? (formulaMediaQuery = window.matchMedia(FORMULA_MEDIA_QUERY)).matches
-        : false);
 
   const hazardParts = splitLabelParts(config.hazard_label);
   const exposureParts = splitLabelParts(config.exposure_label);
   const vulnerabilityParts = splitLabelParts(config.vulnerability_label);
   const capacityParts = splitLabelParts(config.capacity_label);
 
-  const hazardText = buildLabelForMode(hazardParts, compactMode);
-  const exposureText = buildLabelForMode(exposureParts, compactMode);
-  const vulnerabilityText = buildLabelForMode(vulnerabilityParts, compactMode);
-  const capacityText = buildLabelForMode(capacityParts, compactMode);
+  // ใช้แค่ภาษาไทย (primary) เสมอ
+  const hazardText = hazardParts.primary || hazardParts.original || '';
+  const exposureText = exposureParts.primary || exposureParts.original || '';
+  const vulnerabilityText = vulnerabilityParts.primary || vulnerabilityParts.original || '';
+  const capacityText = capacityParts.primary || capacityParts.original || '';
 
   return {
     label: formulaTexts.label,
@@ -290,132 +287,136 @@ function createPlayerCard(playerId) {
       ${removeButtonHtml}
     </div>
     
-    <div class="section">
-      <h3>มูลค่าสินทรัพย์</h3>
-      <div class="input-group">
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>
-            <span>${config.people_label} (4 ${config.coin_label})</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="people-${playerId}">3</div>
-            <button class="increment-btn" onclick="incrementValue('people-${playerId}')">+</button>
-            <button class="decrement-btn" onclick="decrementValue('people-${playerId}', 0)">−</button>
+    <div class="player-card-content">
+      <div class="section">
+        <h3>มูลค่าสินทรัพย์</h3>
+        <div class="assets-placeholder"></div>
+        <div class="input-group">
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <span>${config.people_label} (4 ${config.coin_label})</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="people-${playerId}">3</div>
+              <button class="increment-btn" onclick="incrementValue('people-${playerId}')">+</button>
+              <button class="decrement-btn" onclick="decrementValue('people-${playerId}', 0)">−</button>
+            </div>
+          </div>
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+              </svg>
+              <span>${config.house_label} (1 ${config.coin_label})</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="house-${playerId}">3</div>
+              <button class="increment-btn" onclick="incrementValue('house-${playerId}', 4)">+</button>
+              <button class="decrement-btn" onclick="decrementValue('house-${playerId}', 0)">−</button>
+            </div>
+          </div>
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4zM7 19H5v-2h2v2zm0-4H5v-2h2v2zm0-4H5V9h2v2zm4 4H9v-2h2v2zm0-4H9V9h2v2zm0-4H9V5h2v2zm4 8h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm4 12h-2v-2h2v2z"/>
+              </svg>
+              <span>${config.condo_label} (2 ${config.coin_label})</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="condo-${playerId}">0</div>
+              <button class="increment-btn" onclick="incrementValue('condo-${playerId}', 4)">+</button>
+              <button class="decrement-btn" onclick="decrementValue('condo-${playerId}', 0)">−</button>
+            </div>
+          </div>
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
+              </svg>
+              <span>${config.coin_label}</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="coins-${playerId}">3</div>
+              <button class="increment-btn" onclick="incrementValue('coins-${playerId}')">+</button>
+              <button class="decrement-btn" onclick="decrementValue('coins-${playerId}', null)">−</button>
+            </div>
           </div>
         </div>
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-            </svg>
-            <span>${config.house_label} (1 ${config.coin_label})</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="house-${playerId}">3</div>
-            <button class="increment-btn" onclick="incrementValue('house-${playerId}', 4)">+</button>
-            <button class="decrement-btn" onclick="decrementValue('house-${playerId}', 0)">−</button>
-          </div>
-        </div>
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4zM7 19H5v-2h2v2zm0-4H5v-2h2v2zm0-4H5V9h2v2zm4 4H9v-2h2v2zm0-4H9V9h2v2zm0-4H9V5h2v2zm4 8h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm4 12h-2v-2h2v2z"/>
-            </svg>
-            <span>${config.condo_label} (2 ${config.coin_label})</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="condo-${playerId}">0</div>
-            <button class="increment-btn" onclick="incrementValue('condo-${playerId}', 4)">+</button>
-            <button class="decrement-btn" onclick="decrementValue('condo-${playerId}', 0)">−</button>
-          </div>
-        </div>
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
-            </svg>
-            <span>${config.coin_label}</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="coins-${playerId}">3</div>
-            <button class="increment-btn" onclick="incrementValue('coins-${playerId}')">+</button>
-            <button class="decrement-btn" onclick="decrementValue('coins-${playerId}', null)">−</button>
-          </div>
-        </div>
+        <button class="calculate-btn" onclick="calculateAssets(${playerId})" style="display: none;">คำนวณมูลค่าสินทรัพย์</button>
+        <div class="result" id="assets-result-${playerId}">รอการคำนวณ</div>
       </div>
-      <button class="calculate-btn" onclick="calculateAssets(${playerId})" style="display: none;">คำนวณมูลค่าสินทรัพย์</button>
-      <div class="result" id="assets-result-${playerId}">รอการคำนวณ</div>
-    </div>
-    
-    <div class="section">
-      <h3>วิเคราะห์ความเสี่ยง</h3>
-      <div class="formula">
-         <span class="formula-label">${responsiveFormula.label}</span>
-        <div class="formula-fraction">
-           <div class="formula-numerator">${responsiveFormula.numerator}</div>
-          <div class="formula-divider"></div>
-           <div class="formula-denominator">${responsiveFormula.denominator}</div>
+      
+      <div class="section">
+        <h3>วิเคราะห์ความเสี่ยง</h3>
+        <div class="formula">
+          <span class="formula-label">${responsiveFormula.label}</span>
+          <div class="formula-fraction">
+            <div class="formula-numerator">${responsiveFormula.numerator}</div>
+            <div class="formula-divider"></div>
+            <div class="formula-denominator">${responsiveFormula.denominator}</div>
+          </div>
         </div>
+        <div class="input-group">
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+              </svg>
+              <span>${config.hazard_label}</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="hazard-${playerId}">0</div>
+              <button class="increment-btn" onclick="incrementValue('hazard-${playerId}')">+</button>
+              <button class="decrement-btn" onclick="decrementValue('hazard-${playerId}', 0)">−</button>
+            </div>
+          </div>
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <span>${config.exposure_label}</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="exposure-${playerId}">2</div>
+              <button class="increment-btn" onclick="incrementValue('exposure-${playerId}')">+</button>
+              <button class="decrement-btn" onclick="decrementValue('exposure-${playerId}', 1)">−</button>
+            </div>
+          </div>
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1.06 13.54L7.4 12l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41-5.64 5.66z"/>
+              </svg>
+              <span>${config.vulnerability_label}</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="vulnerability-${playerId}">2</div>
+              <button class="increment-btn" onclick="incrementValue('vulnerability-${playerId}')">+</button>
+              <button class="decrement-btn" onclick="decrementValue('vulnerability-${playerId}', 1)">−</button>
+            </div>
+          </div>
+          <div class="input-field">
+            <label>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
+                <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+              </svg>
+              <span>${config.capacity_label}</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="value-display" id="capacity-${playerId}">2</div>
+              <button class="increment-btn" onclick="incrementValue('capacity-${playerId}')">+</button>
+              <button class="decrement-btn" onclick="decrementValue('capacity-${playerId}', 1)">−</button>
+            </div>
+          </div>
+        </div>
+        <div class="risk-note">หมายเหตุ : หากค่าความเสี่ยงที่คำนวณได้เป็นทศนิยม ให้ปัดทศนิยมขึ้นทุกกรณี</div>
+        <button class="calculate-btn" onclick="calculateRisk(${playerId})" style="display: none;">คำนวณความเสี่ยง</button>
+        <div class="result" id="risk-result-${playerId}">รอการคำนวณ</div>
       </div>
-      <div class="input-group">
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-            </svg>
-            <span>${config.hazard_label}</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="hazard-${playerId}">0</div>
-            <button class="increment-btn" onclick="incrementValue('hazard-${playerId}')">+</button>
-            <button class="decrement-btn" onclick="decrementValue('hazard-${playerId}', 0)">−</button>
-          </div>
-        </div>
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-            <span>${config.exposure_label}</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="exposure-${playerId}">2</div>
-            <button class="increment-btn" onclick="incrementValue('exposure-${playerId}')">+</button>
-            <button class="decrement-btn" onclick="decrementValue('exposure-${playerId}', 1)">−</button>
-          </div>
-        </div>
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1.06 13.54L7.4 12l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41-5.64 5.66z"/>
-            </svg>
-            <span>${config.vulnerability_label}</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="vulnerability-${playerId}">2</div>
-            <button class="increment-btn" onclick="incrementValue('vulnerability-${playerId}')">+</button>
-            <button class="decrement-btn" onclick="decrementValue('vulnerability-${playerId}', 1)">−</button>
-          </div>
-        </div>
-        <div class="input-field">
-          <label>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#667eea">
-              <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
-            </svg>
-            <span>${config.capacity_label}</span>
-          </label>
-          <div class="input-wrapper">
-            <div class="value-display" id="capacity-${playerId}">2</div>
-            <button class="increment-btn" onclick="incrementValue('capacity-${playerId}')">+</button>
-            <button class="decrement-btn" onclick="decrementValue('capacity-${playerId}', 1)">−</button>
-          </div>
-        </div>
-      </div>
-      <button class="calculate-btn" onclick="calculateRisk(${playerId})" style="display: none;">คำนวณความเสี่ยง</button>
-      <div class="result" id="risk-result-${playerId}">รอการคำนวณ</div>
     </div>
   `;
   
@@ -697,7 +698,7 @@ function showRulesInfo() {
         <section class="rules-section">
           <h3>คำอธิบายตัวแปร</h3>
           <ul class="rules-list">
-            <li><strong>ภัยอันตราย (Hazard):</strong> ความรุนแรงหรือโอกาสเกิดของภัย เช่น น้ำท่วม แผ่นดินไหว</li>
+            <li><strong>ภัยพิบัติ (Hazard):</strong> ความรุนแรงหรือโอกาสเกิดของภัย เช่น น้ำท่วม แผ่นดินไหว</li>
             <li><strong>ความล่อแหลม (Exposure):</strong> สิ่งที่อยู่ในพื้นที่เสี่ยง เช่น คน อาคาร ทรัพย์สิน</li>
             <li><strong>ความเปราะบาง (Vulnerability):</strong> ระดับความเสียหายที่อาจเกิดขึ้นเมื่อเกิดภัย</li>
             <li><strong>ความสามารถในการรับมือ (Capacity):</strong> ความพร้อมของระบบในการป้องกันหรือฟื้นฟู</li>
@@ -759,8 +760,8 @@ function showRulesInfo() {
           <ul class="rules-list">
             <li>หลังจากที่เลือกเสียสละทรัพยากรของตัวเองใน Phase เผชิญภัยแล้ว ผู้เล่นไม่เหลือทรัพยากรคนเลย ผู้เล่นคนนั้นจะแพ้เกมทันที</li>
             <li>หลังจาก Phase เผชิญภัย หากมีผู้เล่นเหลือรอดเป็นคนสุดท้าย จะชนะเกมทันที</li>
-            <li>หลังจากสิ้นสุดเกม ผู้ที่มีทรัพยากรมากที่สุด จะเป็นผู้ชนะเกม</li>
-            <li>หลังจากสิ้นสุดเกม หากผู้มีทรัพยากรเท่ากัน ให้สุ่มเลือกการ์ดภัยพิบัติ 1 ใบจาก 3 ใบที่ไม่ได้ใช้ในเกมนี้ แล้วทำซ้ำขั้นตอนที่ 6 ถึงขั้นตอนที่ 9 ผู้ที่มีทรัพยากรมากที่สุด จะเป็นผู้ชนะเกม ถ้ายังมีเท่ากันอีกให้ทำซ้ำขั้นตอนนี้อีกครั้ง</li>
+            <li>หลังจากสิ้นสุดเกม ผู้ที่มีมูลค่าสินทรัพย์รวมมากที่สุด จะเป็นผู้ชนะเกม</li>
+            <li>หลังจากสิ้นสุดเกม หากผู้มีทรัพยากรเท่ากัน ให้สุ่มเลือกการ์ดภัยพิบัติ 1 ใบจาก 3 ใบที่ไม่ได้ใช้ในเกมนี้ แล้วทำซ้ำขั้นตอนที่ 6 ถึงขั้นตอนที่ 9 ผู้ที่มีมูลค่าสินทรัพย์รวมมากที่สุด จะเป็นผู้ชนะเกม ถ้ายังมีเท่ากันอีกให้ทำซ้ำขั้นตอนนี้อีกครั้ง</li>
           </ul>
         </section>
       </div>
@@ -974,7 +975,7 @@ function calculateAssets(playerId) {
   const total = (people * 4) + (house * 1) + (condo * 2) + coins;
   
   const config = getActiveConfig();
-  document.getElementById(`assets-result-${playerId}`).textContent = `มูลค่ารวม: ${total} ${config.coin_label}`;
+  document.getElementById(`assets-result-${playerId}`).textContent = `มูลค่าสินทรัพย์รวม: ${total}`;
 }
 
 function calculateRisk(playerId) {

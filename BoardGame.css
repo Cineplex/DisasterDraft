@@ -111,6 +111,20 @@ body {
   background: white;
   border-radius: 12px;
   box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.player-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 769px) {
+  .player-card-content {
+    flex-direction: row;
+    gap: 20px;
+  }
 }
 
 .player-header {
@@ -259,12 +273,30 @@ body {
   padding: 15px;
   background: #f9fafb;
   border-radius: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 769px) {
+  .section {
+    margin: 25px 12.5px;
+  }
+  
+  .section:first-child {
+    margin-left: 25px;
+  }
+  
+  .section:last-child {
+    margin-right: 25px;
+  }
 }
 
 .section h3 {
   margin: 0 0 15px 0;
   color: #374151;
-  font-size: 1.2em;
+  font-size: 1.5em;
+  font-weight: 600;
 }
 
 .input-group {
@@ -272,6 +304,14 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 15px;
+}
+
+@media (min-width: 769px) {
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 }
 
 .input-field {
@@ -410,6 +450,24 @@ body {
   max-width: 100%;
 }
 
+.assets-placeholder {
+  background-image: url("https://i.pinimg.com/736x/ca/1b/1f/ca1b1fe3dfe1e7d210a3878a7bda7809.jpg");
+  background-size: cover;       /* ให้ภาพเต็มหน้าจอ */
+  background-position: center;  /* จัดให้อยู่กึ่งกลาง */
+  background-repeat: no-repeat; /* ไม่ให้ภาพซ้ำ */
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  min-height: 90px;
+  box-sizing: border-box;
+}
+
+.risk-note {
+  color: #6b7280;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
 .calculate-btn {
   width: 100%;
   background: #667eea;
@@ -430,7 +488,7 @@ body {
 }
 
 .result {
-  margin-top: 15px;
+  margin-top: auto;
   padding: 12px;
   background: white;
   border-radius: 6px;
