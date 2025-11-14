@@ -314,7 +314,7 @@ function createPlayerCard(playerId) {
             </label>
             <div class="input-wrapper">
               <div class="value-display" id="house-${playerId}">3</div>
-              <button class="increment-btn" onclick="incrementValue('house-${playerId}', 4)">+</button>
+              <button class="increment-btn" onclick="incrementValue('house-${playerId}')">+</button>
               <button class="decrement-btn" onclick="decrementValue('house-${playerId}', 0)">−</button>
             </div>
           </div>
@@ -327,7 +327,7 @@ function createPlayerCard(playerId) {
             </label>
             <div class="input-wrapper">
               <div class="value-display" id="condo-${playerId}">0</div>
-              <button class="increment-btn" onclick="incrementValue('condo-${playerId}', 4)">+</button>
+              <button class="increment-btn" onclick="incrementValue('condo-${playerId}')">+</button>
               <button class="decrement-btn" onclick="decrementValue('condo-${playerId}', 0)">−</button>
             </div>
           </div>
